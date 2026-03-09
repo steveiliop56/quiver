@@ -101,18 +101,20 @@ export default function App() {
           onPatProvided={handlePatProvided}
         />
       )}
-      {screen === "game" && (
-        <GameBoard
-          key={gameKey}
-          username={username}
-          pat={pat}
-          filter={deckFilter}
-          preloadedRepos={preloadedRepos}
-          onExport={handleExport}
-          onRestart={handleRestart}
-          onChangeUsername={handleChangeUsername}
-          onPatProvided={handlePatProvided}
-        />
+      {(screen === "game" || screen === "export") && (
+        <div className={`h-full w-full ${screen === "export" ? "hidden" : ""}`}>
+          <GameBoard
+            key={gameKey}
+            username={username}
+            pat={pat}
+            filter={deckFilter}
+            preloadedRepos={preloadedRepos}
+            onExport={handleExport}
+            onRestart={handleRestart}
+            onChangeUsername={handleChangeUsername}
+            onPatProvided={handlePatProvided}
+          />
+        </div>
       )}
       {screen === "export" && (
         <ExportScreen
