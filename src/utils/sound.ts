@@ -65,6 +65,17 @@ export function playClickSound() {
   playTone(1000, 0.03, "square", 0.08);
 }
 
+/** Star milestone fanfare — Mario 1-UP style */
+export function playMilestoneSound() {
+  const notes = [784, 988, 1175, 1319, 1568, 1760, 2093];
+  notes.forEach((freq, i) => {
+    playTone(freq, 0.12, "square", 0.13, i * 0.07);
+  });
+  // Shimmering tail
+  playTone(2093, 0.4, "sine", 0.08, 0.5);
+  playTone(2637, 0.3, "sine", 0.05, 0.55);
+}
+
 /** Export success fanfare */
 export function playExportSound() {
   const notes = [523, 659, 784, 1047, 1319];

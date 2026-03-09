@@ -16,6 +16,7 @@ export default function App() {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
   const [pinnedForExport, setPinnedForExport] = useState<StarredRepo[]>([]);
+  const [totalStarsForExport, setTotalStarsForExport] = useState(0);
   const [deckFilter, setDeckFilter] = useState<DeckFilter>({ type: "all", value: "" });
   const [preloadedRepos, setPreloadedRepos] = useState<StarredRepo[]>([]);
   const [gameKey, setGameKey] = useState(0);
@@ -51,8 +52,9 @@ export default function App() {
     setScreen("game");
   }, []);
 
-  const handleExport = useCallback((pinned: StarredRepo[]) => {
+  const handleExport = useCallback((pinned: StarredRepo[], totalStars: number) => {
     setPinnedForExport(pinned);
+    setTotalStarsForExport(totalStars);
     setScreen("export");
   }, []);
 
@@ -115,6 +117,7 @@ export default function App() {
       {screen === "export" && (
         <ExportScreen
           projects={pinnedForExport}
+          totalStars={totalStarsForExport}
           onBack={handleBackToGame}
           onRestart={handleRestart}
         />

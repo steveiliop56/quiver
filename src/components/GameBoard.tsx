@@ -14,6 +14,7 @@ import {
   playDismissSound,
   playCardSound,
   playClickSound,
+  playMilestoneSound,
   startBgm,
   stopBgm,
   setBgmVolume,
@@ -22,12 +23,14 @@ import {
 import ProjectCard from "./ProjectCard";
 import RateLimitPrompt from "./RateLimitPrompt";
 
+const MILESTONES = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
+
 interface GameBoardProps {
   username: string;
   pat?: string;
   filter: DeckFilter;
   preloadedRepos: StarredRepo[];
-  onExport: (pinned: StarredRepo[]) => void;
+  onExport: (pinned: StarredRepo[], totalStars: number) => void;
   onRestart: () => void;
   onChangeUsername: () => void;
   onPatProvided: (pat: string) => void;
@@ -59,6 +62,13 @@ function applyFilter(repos: StarredRepo[], filter: DeckFilter): StarredRepo[] {
   return repos.filter((r) => r.topics.includes(filter.value));
 }
 
+function formatStarCount(n: number): string {
+  if (n >= 100000) return `${(n / 1000).toFixed(0)}K`;
+  if (n >= 10000) return `${(n / 1000).toFixed(1)}K`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return n.toString();
+}
+
 export default function GameBoard({ username, pat, filter, preloadedRepos, onExport, onRestart, onChangeUsername, onPatProvided }: GameBoardProps) {
   const [repos, setRepos] = useState<StarredRepo[]>(() => {
     return shuffleRepos(applyFilter(preloadedRepos, filter));
@@ -68,7 +78,11 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     return new Set(getPinned().map((p) => p.id));
   });
   const [pinnedRepos, setPinnedRepos] = useState<StarredRepo[]>([]);
-  const [page, setPage] = useState(4); // preloaded covers pages 1-3
+  const [totalStars, setTotalStars] = useState(0);
+  const [starPop, setStarPop] = useState(false);
+  const [milestone, setMilestone] = useState<number | null>(null);
+  const passedMilestones = useRef(new Set<number>());
+  const [page, setPage] = useState(4);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [animatingAction, setAnimatingAction] = useState<"pin" | "dismiss" | null>(null);
@@ -79,6 +93,25 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
   const prevIndex = useRef(0);
   const seenIds = useRef(new Set(preloadedRepos.map((r) => r.id)));
 
+  const checkMilestone = useCallback((prevTotal: number, newTotal: number) => {
+    // Find the highest milestone crossed by this pin
+    let highest: number | null = null;
+    for (const m of MILESTONES) {
+      if (newTotal >= m && prevTotal < m) {
+        highest = m;
+      }
+    }
+    if (highest) {
+      // Mark all milestones up to the highest as passed
+      for (const m of MILESTONES) {
+        if (m <= highest) passedMilestones.current.add(m);
+      }
+      setMilestone(highest);
+      playMilestoneSound();
+      setTimeout(() => setMilestone(null), 2000);
+    }
+  }, []);
+
   const loadMore = useCallback(async () => {
     if (!hasMore) return;
     setLoading(true);
@@ -87,7 +120,6 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     try {
       const octokit = createOctokit(pat);
       const result = await fetchStarredRepos(octokit, username, page, 100);
-      // Deduplicate against already-loaded repos
       const newRepos = result.repos.filter((r) => !seenIds.current.has(r.id));
       for (const r of newRepos) seenIds.current.add(r.id);
       const filtered = applyFilter(newRepos, filter);
@@ -106,14 +138,12 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     }
   }, [page, hasMore, filter, username, pat]);
 
-  // Prefetch next page when we're close to the end
   useEffect(() => {
     if (repos.length - currentIndex <= 5 && hasMore && !loading && !rateLimited) {
       loadMore();
     }
   }, [currentIndex, repos.length, hasMore, loading, rateLimited]);
 
-  // Play card appear sound when card changes
   useEffect(() => {
     if (currentIndex !== prevIndex.current && repos[currentIndex]) {
       playCardSound();
@@ -137,6 +167,15 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     if (!currentRepo || animatingAction || paused) return;
     playPinSound();
     setAnimatingAction("pin");
+
+    // Update star counter
+    const prevTotal = totalStars;
+    const newTotal = prevTotal + currentRepo.stars;
+    setTotalStars(newTotal);
+    setStarPop(true);
+    setTimeout(() => setStarPop(false), 300);
+    checkMilestone(prevTotal, newTotal);
+
     setTimeout(() => {
       const newIds = new Set(pinnedIds);
       newIds.add(currentRepo.id);
@@ -161,7 +200,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
 
   const handleExport = () => {
     playClickSound();
-    onExport(pinnedRepos);
+    onExport(pinnedRepos, totalStars);
   };
 
   const toggleMusic = () => {
@@ -175,7 +214,6 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     }
   };
 
-  // Keyboard controls
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -192,7 +230,6 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     return () => window.removeEventListener("keydown", handleKey);
   }, [currentRepo, animatingAction, musicOn, paused]);
 
-  // Cleanup BGM on unmount
   useEffect(() => {
     return () => stopBgm();
   }, []);
@@ -201,9 +238,20 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     <div className="flex flex-col h-full">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-retro-green)]/20">
-        <div className="text-[8px] md:text-[10px] space-x-4">
+        <div className="text-[8px] md:text-[10px] space-x-4 flex items-center">
           <span>PINNED: <span className="text-[var(--color-retro-gold)]">{pinnedIds.size}</span></span>
-          <span>REMAINING: <span className="text-[var(--color-retro-accent)]">{remaining > 0 ? remaining : 0}</span></span>
+          <span className="text-[var(--color-retro-green)]/30">|</span>
+          {/* Mario-style star counter */}
+          <span className="flex items-center gap-1">
+            <span className={`text-[var(--color-retro-gold)] text-sm inline-block ${starPop ? "star-pop" : ""}`}>
+              &#9733;
+            </span>
+            <span className="text-[var(--color-retro-gold)] tabular-nums">
+              {formatStarCount(totalStars)}
+            </span>
+          </span>
+          <span className="text-[var(--color-retro-green)]/30">|</span>
+          <span>LEFT: <span className="text-[var(--color-retro-accent)]">{remaining > 0 ? remaining : 0}</span></span>
         </div>
         <div className="flex items-center gap-2">
           <motion.button
@@ -247,6 +295,46 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
           backgroundSize: "100% 100%",
         }}
       >
+        {/* Milestone celebration overlay */}
+        <AnimatePresence>
+          {milestone && (
+            <motion.div
+              key={milestone}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.5 }}
+              transition={{ duration: 0.4 }}
+              className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none"
+            >
+              <div className="text-center">
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 0.6, repeat: 2 }}
+                  className="text-[var(--color-retro-gold)] text-2xl md:text-4xl"
+                >
+                  &#9733; {formatStarCount(milestone)} STARS! &#9733;
+                </motion.div>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-xs text-[var(--color-retro-green)] mt-2"
+                >
+                  MILESTONE REACHED!
+                </motion.p>
+              </div>
+              {/* Radial flash */}
+              <motion.div
+                initial={{ opacity: 0.4, scale: 0 }}
+                animate={{ opacity: 0, scale: 3 }}
+                transition={{ duration: 1 }}
+                className="absolute w-64 h-64 rounded-full"
+                style={{ background: "radial-gradient(circle, var(--color-retro-gold) 0%, transparent 70%)" }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Pinned cards on the wall (miniature) */}
         <div className="absolute inset-0 pointer-events-none">
           {pinnedRepos.slice(-12).map((repo, i) => (
@@ -315,6 +403,9 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
                 className="text-center space-y-6 p-8"
               >
                 <h2 className="text-xl text-[var(--color-retro-gold)]">PAUSED</h2>
+                <p className="text-[10px] text-[var(--color-retro-gold)] opacity-70">
+                  &#9733; {totalStars.toLocaleString()} stars collected
+                </p>
                 <div className="space-y-3 flex flex-col items-center">
                   <motion.button
                     onClick={() => { playClickSound(); setPaused(false); }}
@@ -389,6 +480,9 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
             <p className="text-sm text-[var(--color-retro-gold)]">NO MORE CARDS!</p>
             <p className="text-[10px] opacity-70">
               You pinned {pinnedIds.size} project{pinnedIds.size !== 1 ? "s" : ""} to your wall.
+            </p>
+            <p className="text-[10px] text-[var(--color-retro-gold)]">
+              &#9733; {totalStars.toLocaleString()} total stars
             </p>
             <motion.button
               onClick={handleExport}

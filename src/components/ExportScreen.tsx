@@ -7,11 +7,12 @@ import { playExportSound, playClickSound } from "../utils/sound";
 
 interface ExportScreenProps {
   projects: StarredRepo[];
+  totalStars: number;
   onBack: () => void;
   onRestart: () => void;
 }
 
-export default function ExportScreen({ projects, onBack, onRestart }: ExportScreenProps) {
+export default function ExportScreen({ projects, totalStars, onBack, onRestart }: ExportScreenProps) {
   const [exported, setExported] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -67,6 +68,9 @@ export default function ExportScreen({ projects, onBack, onRestart }: ExportScre
         <p className="text-[10px] opacity-70">
           {projects.length} project{projects.length !== 1 ? "s" : ""} pinned to
           the wall.
+        </p>
+        <p className="text-sm text-[var(--color-retro-gold)]">
+          &#9733; {totalStars.toLocaleString()} total stars
         </p>
 
         {/* Project list */}
