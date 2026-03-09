@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { GameScreen, StarredRepo } from "./types";
-import { storePat, getPat, clearPat, clearPinned } from "./utils/storage";
-import { createOctokit, validatePat } from "./utils/github";
+import { storeUsername, getUsername, clearUsername, clearPinned } from "./utils/storage";
+import { createOctokit, validateUsername } from "./utils/github";
 import PatScreen from "./components/PatScreen";
 import ListSelector, { type DeckFilter } from "./components/ListSelector";
 import GameBoard from "./components/GameBoard";
@@ -9,35 +9,39 @@ import ExportScreen from "./components/ExportScreen";
 
 export default function App() {
   const [screen, setScreen] = useState<GameScreen>(() => {
-    return getPat() ? "lists" : "pat";
+    return getUsername() ? "lists" : "username";
   });
-  const [pat, setPat] = useState<string>(() => getPat() || "");
-  const [patError, setPatError] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>(() => getUsername() || "");
+  const [pat, setPat] = useState<string | undefined>(undefined);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
   const [pinnedForExport, setPinnedForExport] = useState<StarredRepo[]>([]);
   const [deckFilter, setDeckFilter] = useState<DeckFilter>({ type: "all", value: "" });
   const [preloadedRepos, setPreloadedRepos] = useState<StarredRepo[]>([]);
-  // Key to force GameBoard remount on restart/filter change
   const [gameKey, setGameKey] = useState(0);
 
-  const handlePatSubmit = useCallback(async (token: string) => {
+  const handleUsernameSubmit = useCallback(async (name: string) => {
     setValidating(true);
-    setPatError(null);
+    setUsernameError(null);
     try {
-      const octokit = createOctokit(token);
-      const valid = await validatePat(octokit);
+      const octokit = createOctokit(pat);
+      const valid = await validateUsername(octokit, name);
       if (!valid) {
-        setPatError("Invalid token. Check your PAT and try again.");
+        setUsernameError("User not found. Check the username and try again.");
         return;
       }
-      storePat(token);
-      setPat(token);
+      storeUsername(name);
+      setUsername(name);
       setScreen("lists");
     } catch {
-      setPatError("Connection failed. Check your network and try again.");
+      setUsernameError("Connection failed. Check your network and try again.");
     } finally {
       setValidating(false);
     }
+  }, [pat]);
+
+  const handlePatProvided = useCallback((token: string) => {
+    setPat(token);
   }, []);
 
   const handleListSelect = useCallback((filter: DeckFilter, preloaded: StarredRepo[]) => {
@@ -53,57 +57,59 @@ export default function App() {
   }, []);
 
   const handleBackToGame = useCallback(() => {
-    if (!getPat()) {
-      setScreen("pat");
-    } else {
-      setScreen("game");
-    }
+    setScreen("game");
   }, []);
 
   const handleRestart = useCallback(() => {
-    clearPat();
+    clearUsername();
     clearPinned();
-    setPat("");
+    setUsername("");
+    setPat(undefined);
     setDeckFilter({ type: "all", value: "" });
     setPreloadedRepos([]);
     setPinnedForExport([]);
-    setPatError(null);
-    setScreen("pat");
+    setUsernameError(null);
+    setScreen("username");
   }, []);
 
-  const handleChangePat = useCallback(() => {
-    clearPat();
-    setPat("");
-    setPatError(null);
-    setScreen("pat");
+  const handleChangeUsername = useCallback(() => {
+    clearUsername();
+    setUsername("");
+    setUsernameError(null);
+    setScreen("username");
   }, []);
 
   return (
     <div className="h-full w-full crt">
       <div className="crt-refresh" />
-      {screen === "pat" && (
+      {screen === "username" && (
         <PatScreen
-          onSubmit={handlePatSubmit}
-          error={patError}
+          onSubmit={handleUsernameSubmit}
+          error={usernameError}
           loading={validating}
+          defaultUsername={username}
         />
       )}
       {screen === "lists" && (
         <ListSelector
+          username={username}
           pat={pat}
           onSelect={handleListSelect}
-          onChangePat={handleChangePat}
+          onChangeUsername={handleChangeUsername}
+          onPatProvided={handlePatProvided}
         />
       )}
       {screen === "game" && (
         <GameBoard
           key={gameKey}
+          username={username}
           pat={pat}
           filter={deckFilter}
           preloadedRepos={preloadedRepos}
           onExport={handleExport}
           onRestart={handleRestart}
-          onChangePat={handleChangePat}
+          onChangeUsername={handleChangeUsername}
+          onPatProvided={handlePatProvided}
         />
       )}
       {screen === "export" && (

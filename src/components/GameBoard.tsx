@@ -5,6 +5,7 @@ import {
   fetchStarredRepos,
   createOctokit,
   shuffleRepos,
+  RateLimitError,
 } from "../utils/github";
 import type { DeckFilter } from "./ListSelector";
 import { storePinned, getPinned } from "../utils/storage";
@@ -19,14 +20,17 @@ import {
   isBgmPlaying,
 } from "../utils/sound";
 import ProjectCard from "./ProjectCard";
+import RateLimitPrompt from "./RateLimitPrompt";
 
 interface GameBoardProps {
-  pat: string;
+  username: string;
+  pat?: string;
   filter: DeckFilter;
   preloadedRepos: StarredRepo[];
   onExport: (pinned: StarredRepo[]) => void;
   onRestart: () => void;
-  onChangePat: () => void;
+  onChangeUsername: () => void;
+  onPatProvided: (pat: string) => void;
 }
 
 const dismissVariants = {
@@ -55,7 +59,7 @@ function applyFilter(repos: StarredRepo[], filter: DeckFilter): StarredRepo[] {
   return repos.filter((r) => r.topics.includes(filter.value));
 }
 
-export default function GameBoard({ pat, filter, preloadedRepos, onExport, onRestart, onChangePat }: GameBoardProps) {
+export default function GameBoard({ username, pat, filter, preloadedRepos, onExport, onRestart, onChangeUsername, onPatProvided }: GameBoardProps) {
   const [repos, setRepos] = useState<StarredRepo[]>(() => {
     return shuffleRepos(applyFilter(preloadedRepos, filter));
   });
@@ -69,19 +73,20 @@ export default function GameBoard({ pat, filter, preloadedRepos, onExport, onRes
   const [loading, setLoading] = useState(false);
   const [animatingAction, setAnimatingAction] = useState<"pin" | "dismiss" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimited, setRateLimited] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
   const [paused, setPaused] = useState(false);
   const prevIndex = useRef(0);
   const seenIds = useRef(new Set(preloadedRepos.map((r) => r.id)));
 
-  const octokit = createOctokit(pat);
-
   const loadMore = useCallback(async () => {
     if (!hasMore) return;
     setLoading(true);
     setError(null);
+    setRateLimited(false);
     try {
-      const result = await fetchStarredRepos(octokit, page, 100);
+      const octokit = createOctokit(pat);
+      const result = await fetchStarredRepos(octokit, username, page, 100);
       // Deduplicate against already-loaded repos
       const newRepos = result.repos.filter((r) => !seenIds.current.has(r.id));
       for (const r of newRepos) seenIds.current.add(r.id);
@@ -91,18 +96,22 @@ export default function GameBoard({ pat, filter, preloadedRepos, onExport, onRes
       setHasMore(result.hasMore);
       setPage((p) => p + 1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch repos");
+      if (err instanceof RateLimitError) {
+        setRateLimited(true);
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to fetch repos");
+      }
     } finally {
       setLoading(false);
     }
-  }, [page, hasMore, filter]);
+  }, [page, hasMore, filter, username, pat]);
 
   // Prefetch next page when we're close to the end
   useEffect(() => {
-    if (repos.length - currentIndex <= 5 && hasMore && !loading) {
+    if (repos.length - currentIndex <= 5 && hasMore && !loading && !rateLimited) {
       loadMore();
     }
-  }, [currentIndex, repos.length, hasMore, loading]);
+  }, [currentIndex, repos.length, hasMore, loading, rateLimited]);
 
   // Play card appear sound when card changes
   useEffect(() => {
@@ -114,7 +123,7 @@ export default function GameBoard({ pat, filter, preloadedRepos, onExport, onRes
 
   const currentRepo = repos[currentIndex];
   const remaining = repos.length - currentIndex;
-  const isDone = !loading && remaining <= 0;
+  const isDone = !loading && !rateLimited && remaining <= 0;
 
   const savePinned = (newPinnedRepos: StarredRepo[], newPinnedIds: Set<number>) => {
     const compact: PinnedProject[] = Array.from(newPinnedIds).map((id) => {
@@ -268,7 +277,7 @@ export default function GameBoard({ pat, filter, preloadedRepos, onExport, onRes
 
         {/* Current card */}
         <AnimatePresence mode="wait">
-          {currentRepo && !isDone && !paused && (
+          {currentRepo && !isDone && !paused && !rateLimited && (
             <motion.div
               key={currentRepo.id}
               variants={animatingAction === "pin" ? pinVariants : dismissVariants}
@@ -282,6 +291,13 @@ export default function GameBoard({ pat, filter, preloadedRepos, onExport, onRes
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Rate limit prompt */}
+        {rateLimited && !paused && (
+          <div className="z-40 w-full max-w-md px-4">
+            <RateLimitPrompt onPatProvided={onPatProvided} />
+          </div>
+        )}
 
         {/* Pause menu overlay */}
         <AnimatePresence>
@@ -309,12 +325,12 @@ export default function GameBoard({ pat, filter, preloadedRepos, onExport, onRes
                     &#9654; RESUME
                   </motion.button>
                   <motion.button
-                    onClick={() => { playClickSound(); onChangePat(); }}
+                    onClick={() => { playClickSound(); onChangeUsername(); }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="w-48 text-[10px] bg-[var(--color-retro-blue)] text-[var(--color-retro-green)] px-6 py-3 font-[inherit] cursor-pointer border border-[var(--color-retro-green)]/30"
                   >
-                    &#9881; CHANGE PAT
+                    &#9881; CHANGE USER
                   </motion.button>
                   <motion.button
                     onClick={handleExport}

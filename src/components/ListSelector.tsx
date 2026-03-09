@@ -5,9 +5,11 @@ import {
   fetchStarSample,
   extractLanguages,
   extractTopics,
+  RateLimitError,
 } from "../utils/github";
 import type { StarredRepo } from "../types";
 import { playClickSound } from "../utils/sound";
+import RateLimitPrompt from "./RateLimitPrompt";
 
 export interface DeckFilter {
   type: "all" | "language" | "topic";
@@ -15,14 +17,17 @@ export interface DeckFilter {
 }
 
 interface ListSelectorProps {
-  pat: string;
+  username: string;
+  pat?: string;
   onSelect: (filter: DeckFilter, preloaded: StarredRepo[]) => void;
-  onChangePat: () => void;
+  onChangeUsername: () => void;
+  onPatProvided: (pat: string) => void;
 }
 
-export default function ListSelector({ pat, onSelect, onChangePat }: ListSelectorProps) {
+export default function ListSelector({ username, pat, onSelect, onChangeUsername, onPatProvided }: ListSelectorProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimited, setRateLimited] = useState(false);
   const [languages, setLanguages] = useState<Map<string, number>>(new Map());
   const [topics, setTopics] = useState<Map<string, number>>(new Map());
   const [tab, setTab] = useState<"language" | "topic">("language");
@@ -31,21 +36,27 @@ export default function ListSelector({ pat, onSelect, onChangePat }: ListSelecto
   useEffect(() => {
     const load = async () => {
       setError(null);
+      setRateLimited(false);
+      setLoading(true);
       try {
         const octokit = createOctokit(pat);
-        const repos = await fetchStarSample(octokit, 3);
+        const repos = await fetchStarSample(octokit, username, 3);
         setPreloaded(repos);
         setLanguages(extractLanguages(repos));
         setTopics(extractTopics(repos));
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Unknown error";
-        setError(`Failed to fetch stars: ${msg}`);
+        if (err instanceof RateLimitError) {
+          setRateLimited(true);
+        } else {
+          const msg = err instanceof Error ? err.message : "Unknown error";
+          setError(`Failed to fetch stars: ${msg}`);
+        }
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [pat]);
+  }, [username, pat]);
 
   const handleSelect = (filter: DeckFilter) => {
     playClickSound();
@@ -66,9 +77,9 @@ export default function ListSelector({ pat, onSelect, onChangePat }: ListSelecto
           CHOOSE YOUR DECK
         </h2>
         <p className="text-[9px] opacity-60 leading-relaxed">
-          Filter your stars by language or topic,
+          Browsing stars for <span className="text-[var(--color-retro-gold)]">{username}</span>.
           <br />
-          or browse them all.
+          Filter by language or topic, or browse them all.
         </p>
 
         {loading && (
@@ -81,6 +92,10 @@ export default function ListSelector({ pat, onSelect, onChangePat }: ListSelecto
           </motion.p>
         )}
 
+        {rateLimited && (
+          <RateLimitPrompt onPatProvided={onPatProvided} />
+        )}
+
         {error && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -91,7 +106,7 @@ export default function ListSelector({ pat, onSelect, onChangePat }: ListSelecto
           </motion.div>
         )}
 
-        {!loading && (
+        {!loading && !rateLimited && (
           <>
             {/* All stars */}
             <motion.button
@@ -162,13 +177,13 @@ export default function ListSelector({ pat, onSelect, onChangePat }: ListSelecto
           </>
         )}
 
-        {/* Change PAT */}
+        {/* Change username */}
         <motion.button
-          onClick={() => { playClickSound(); onChangePat(); }}
+          onClick={() => { playClickSound(); onChangeUsername(); }}
           whileHover={{ scale: 1.02 }}
           className="text-[9px] bg-transparent border-none text-[var(--color-retro-green)]/50 font-[inherit] cursor-pointer hover:text-[var(--color-retro-green)] transition-colors"
         >
-          &#8592; CHANGE PAT
+          &#8592; CHANGE USERNAME
         </motion.button>
       </motion.div>
     </div>

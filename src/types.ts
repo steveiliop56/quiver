@@ -19,4 +19,4 @@ export interface PinnedProject {
   fullName: string;
 }
 
-export type GameScreen = "pat" | "lists" | "game" | "export";
+export type GameScreen = "username" | "lists" | "game" | "export";

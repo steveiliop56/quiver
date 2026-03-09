@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import type { StarredRepo } from "../types";
 import { exportMarkdown, exportJson, downloadFile } from "../utils/export";
-import { clearPat, clearPinned } from "../utils/storage";
+import { clearPinned } from "../utils/storage";
 import { playExportSound, playClickSound } from "../utils/sound";
 
 interface ExportScreenProps {
@@ -21,7 +21,6 @@ export default function ExportScreen({ projects, onBack, onRestart }: ExportScre
     const filename = `quiver-projects.${format === "md" ? "md" : "json"}`;
     downloadFile(content, filename);
     playExportSound();
-    clearPat();
     clearPinned();
     setExported(true);
   };
@@ -163,10 +162,7 @@ export default function ExportScreen({ projects, onBack, onRestart }: ExportScre
             className="space-y-4"
           >
             <p className="text-sm text-[var(--color-retro-green)]">
-              EXPORTED! PAT CLEARED. &#10003;
-            </p>
-            <p className="text-[8px] opacity-50">
-              Your token has been removed from session storage.
+              EXPORTED! &#10003;
             </p>
             <motion.button
               onClick={() => { playClickSound(); onRestart(); }}

@@ -1,13 +1,23 @@
 import { Octokit } from "octokit";
 import type { StarredRepo } from "../types";
 
-export function createOctokit(pat: string): Octokit {
-  return new Octokit({ auth: pat });
+export function createOctokit(pat?: string): Octokit {
+  return pat ? new Octokit({ auth: pat }) : new Octokit();
 }
 
-export async function validatePat(octokit: Octokit): Promise<boolean> {
+export class RateLimitError extends Error {
+  constructor() {
+    super("GitHub API rate limit exceeded. Provide a PAT to continue.");
+    this.name = "RateLimitError";
+  }
+}
+
+export async function validateUsername(
+  octokit: Octokit,
+  username: string
+): Promise<boolean> {
   try {
-    await octokit.rest.users.getAuthenticated();
+    await octokit.rest.users.getByUsername({ username });
     return true;
   } catch {
     return false;
@@ -47,28 +57,43 @@ function mapRepos(data: RawRepo[]): StarredRepo[] {
 
 export async function fetchStarredRepos(
   octokit: Octokit,
+  username: string,
   page: number = 1,
   perPage: number = 30
 ): Promise<{ repos: StarredRepo[]; hasMore: boolean }> {
-  const { data } = await octokit.rest.activity.listReposStarredByAuthenticatedUser({
-    per_page: perPage,
-    page,
-    sort: "created",
-    direction: "desc",
-  });
+  try {
+    const { data } = await octokit.rest.activity.listReposStarredByUser({
+      username,
+      per_page: perPage,
+      page,
+      sort: "created",
+      direction: "desc",
+    });
 
-  const repos = mapRepos(data as RawRepo[]);
-  return { repos, hasMore: repos.length === perPage };
+    const repos = mapRepos(data as RawRepo[]);
+    return { repos, hasMore: repos.length === perPage };
+  } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "status" in err &&
+      (err as { status: number }).status === 403
+    ) {
+      throw new RateLimitError();
+    }
+    throw err;
+  }
 }
 
 /** Fetch multiple pages to build a language/topic index */
 export async function fetchStarSample(
   octokit: Octokit,
+  username: string,
   pages: number = 3
 ): Promise<StarredRepo[]> {
   const all: StarredRepo[] = [];
   for (let p = 1; p <= pages; p++) {
-    const { repos, hasMore } = await fetchStarredRepos(octokit, p, 100);
+    const { repos, hasMore } = await fetchStarredRepos(octokit, username, p, 100);
     all.push(...repos);
     if (!hasMore) break;
   }

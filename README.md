@@ -17,7 +17,7 @@ A retro-styled mini-game for discovering self-hosted projects from your GitHub s
 - **Retro CRT aesthetic** — Scanlines, phosphor glow, refresh band, pixel font
 - **Chiptune audio** — Background music and sound effects (Web Audio API, no external files)
 - **Export** — Download your pinned projects as Markdown or JSON
-- **Privacy-first** — PAT stored in session storage only, deleted on export
+- **No token required** — Uses the public GitHub API; PAT only needed if rate-limited (held in memory, never stored)
 - **Fully client-side** — No backend, runs entirely in the browser
 
 ## Quick Start
@@ -38,7 +38,7 @@ Then open [http://localhost:8080](http://localhost:8080).
 
 ## Usage
 
-1. Enter a GitHub Personal Access Token (needs read access to starred repos)
+1. Enter your GitHub username
 2. Choose a deck — all stars, or filter by language/topic
 3. Pin projects you like (Arrow Right / D), pass on the rest (Arrow Left / A)
 4. Press M for music, ESC for pause menu

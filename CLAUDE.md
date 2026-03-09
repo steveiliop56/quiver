@@ -1,31 +1,73 @@
 # Quiver
 
-We are building a new self-hosted application called Quiver.
-
-### Idea
-
-Usually, we star different self-hosted applications in a "Should Try" list that we never actually look at again. What if we could game-ify this experience? Quiver will be a mini-game based around this idea. Projects are playing cards that are presented to the user and if the project is interesting, you throw a dart and "pin" it to your wall of interesting projects. Later, you can export your self-hosted projects in a Markdown list to browse later. The game should be retro-style (think solitaire).
+A retro-styled mini-game for discovering self-hosted projects from your GitHub stars. Projects appear as playing cards — pin the ones you like to your wall with a dart, dismiss the rest. Export your curated list when you're done.
 
 ### Game Flow
 
-The user lands on the page. They are presented with an input for a GitHub PAT (since we will need to fetch a lot of stuff from the GitHub API). After they input their PAT they select their list and we start fetching and presenting projects. A project appears as a playing card in the middle of the screen containing the project information. This included but not limited to app name, icon (if found), website and description. All of these can be fetched from the GitHub description and/or website. If the user likes the project they throw a dart and pin the card to the wall behind. If they do not like the project, the card falls off the screen. Once the user decides they have enough projects (or we can no longer fetch other projects), he can export the list in Markdown or JSON format for later viewing.
+The user lands on the page and enters their GitHub username (no token required). They select a deck filter (all stars, by language, or by topic) and we start fetching and presenting projects via the public GitHub API. A project appears as a playing card in the middle of the screen containing the project information (name, avatar, description, website, stars, language, topics). If the user likes the project they pin it to the cork board wall behind. If not, the card falls off the screen. Once done, they export as Markdown or JSON.
 
-### Implementation Details
+If the GitHub API rate limit is hit (60 req/hour unauthenticated), an inline prompt asks for a PAT to continue (5,000 req/hour). The PAT is held only in memory (never stored to disk/storage) and is discarded when the page closes.
 
-The application should run client-side, this means no backend.
+### Tech Stack
 
-We are going to utilize Vite for the renderer and React for the framework. For styling utilize Tailwind CSS. Octokit can be used to make GitHub API usage easier. We are going to need animations and in that case, pick Framer. For any other libraries for icons, sounds, textures notify the user of your choice. Since the app is going to be single page we are not going to need any routing but in case we do, pick Tanstack Router. Finally, for package manager choose Bun.
+- **Renderer**: Vite
+- **Framework**: React 19 + TypeScript
+- **Styling**: Tailwind CSS 4
+- **Animations**: Framer Motion
+- **GitHub API**: Octokit
+- **Audio**: Web Audio API (chiptune, no external files)
+- **Package manager**: Bun
 
-For the game itself, until the user exports the project list we store the PAT and project list in the browser local-storage emphasizing on a small efficient format that can be used later to retrieve projects. Once the user exports the PAT gets immediately deleted. It's important we minimize the API usage even with the PAT to avoid getting rate limited.
+### File Structure
 
-License the project as MIT.
+```
+src/
+├── main.tsx                          Entry point
+├── App.tsx                           Root component, screen state machine
+├── types.ts                          Shared TypeScript interfaces
+├── index.css                         Global styles, CRT effects, color vars
+├── utils/
+│   ├── github.ts                     Octokit wrapper, fetch stars, rate limit handling
+│   ├── storage.ts                    localStorage for username + pinned projects
+│   ├── export.ts                     Markdown/JSON export + file download
+│   └── sound.ts                      Web Audio API chiptune engine
+└── components/
+    ├── PatScreen.tsx                  Username input (entry screen)
+    ├── ListSelector.tsx              Deck filter selection (language/topic)
+    ├── GameBoard.tsx                 Main game loop, card display, pin/dismiss
+    ├── ProjectCard.tsx               Individual project card UI
+    ├── RateLimitPrompt.tsx           Inline PAT prompt shown on 403
+    └── ExportScreen.tsx              Export preview + download
+```
+
+### Color Palette (CSS custom properties in index.css)
+
+- `--color-retro-green` (#00ff41) — primary text, CRT phosphor glow
+- `--color-retro-dark` (#0a0a0a) — dark backgrounds
+- `--color-retro-card` (#1a1a2e) — card backgrounds
+- `--color-retro-accent` (#e94560) — errors, pass button, accents
+- `--color-retro-gold` (#f5c518) — titles, highlights, export button
+- `--color-retro-blue` (#16213e) — input containers, pause menu
+- `--color-cork` (#c4956a) / `--color-cork-dark` (#a67b5b) — cork board wall
+
+### Screen Flow
+
+```
+PatScreen (username input)
+  → ListSelector (deck filter, fetches 3 pages sample)
+    → GameBoard (play: pin/dismiss cards, paginated fetch)
+      → ExportScreen (preview + download MD/JSON)
+```
 
 ### Constraints
 
-We never use the PAT to fetch anything else other than projects. We treat is as readonly and never expose it everywhere. Additionally we store the PAT in session storage instead of local storage and we re-prompt the user for the PAT to continue the project or offer to export it in case we loose the PAT. The game needs to be fully responsive and work both on desktop and mobile.
+- **No backend** — fully client-side
+- **PAT is optional** — only needed if rate limited, never stored to disk
+- **Username** stored in localStorage for convenience
+- **Pinned projects** stored in localStorage as compact `{id, fullName}[]`
+- **Responsive** — works on desktop and mobile
+- **Licensed MIT**
 
 ### Development Details
 
 While developing, never run potentially destructive commands (like installing packages, or removing/moving files) without asking the user for explicit permission. The directory in which you are on is your workspace and you cannot exit out of it. Everything you do stays there.
-
-I have setup an empty GitHub repository for you, let's get started.

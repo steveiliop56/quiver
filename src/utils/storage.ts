@@ -1,18 +1,18 @@
 import type { PinnedProject } from "../types";
 
-const PAT_KEY = "quiver_pat";
+const USERNAME_KEY = "quiver_username";
 const PINNED_KEY = "quiver_pinned";
 
-export function storePat(pat: string): void {
-  sessionStorage.setItem(PAT_KEY, pat);
+export function storeUsername(username: string): void {
+  localStorage.setItem(USERNAME_KEY, username);
 }
 
-export function getPat(): string | null {
-  return sessionStorage.getItem(PAT_KEY);
+export function getUsername(): string | null {
+  return localStorage.getItem(USERNAME_KEY);
 }
 
-export function clearPat(): void {
-  sessionStorage.removeItem(PAT_KEY);
+export function clearUsername(): void {
+  localStorage.removeItem(USERNAME_KEY);
 }
 
 export function storePinned(projects: PinnedProject[]): void {

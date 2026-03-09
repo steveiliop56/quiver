@@ -2,17 +2,18 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 
 interface PatScreenProps {
-  onSubmit: (pat: string) => void;
+  onSubmit: (username: string) => void;
   error: string | null;
   loading: boolean;
+  defaultUsername?: string;
 }
 
-export default function PatScreen({ onSubmit, error, loading }: PatScreenProps) {
-  const [pat, setPat] = useState("");
+export default function PatScreen({ onSubmit, error, loading, defaultUsername }: PatScreenProps) {
+  const [username, setUsername] = useState(defaultUsername || "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pat.trim()) onSubmit(pat.trim());
+    if (username.trim()) onSubmit(username.trim());
   };
 
   return (
@@ -41,21 +42,21 @@ export default function PatScreen({ onSubmit, error, loading }: PatScreenProps) 
         className="w-full max-w-md bg-[var(--color-retro-blue)] border-2 border-[var(--color-retro-green)] p-6 md:p-8"
       >
         <label className="block text-xs mb-4 text-[var(--color-retro-green)]">
-          ENTER GITHUB PAT
+          ENTER GITHUB USERNAME
         </label>
         <input
-          type="password"
-          value={pat}
-          onChange={(e) => setPat(e.target.value)}
-          placeholder="ghp_..."
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="octocat"
           className="w-full bg-[var(--color-retro-dark)] border border-[var(--color-retro-green)] text-[var(--color-retro-green)] px-4 py-3 text-xs font-[inherit] placeholder:text-[var(--color-retro-green)]/30 focus:outline-none focus:border-[var(--color-retro-gold)] transition-colors"
           autoFocus
           autoComplete="off"
         />
         <p className="text-[8px] md:text-[10px] mt-2 opacity-50 leading-relaxed">
-          Needs read access to your starred repositories.
+          We'll browse your starred repositories.
           <br />
-          Stored in session only. Deleted on export.
+          No token needed — uses the public GitHub API.
         </p>
 
         {error && (
@@ -70,12 +71,12 @@ export default function PatScreen({ onSubmit, error, loading }: PatScreenProps) 
 
         <motion.button
           type="submit"
-          disabled={!pat.trim() || loading}
+          disabled={!username.trim() || loading}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="w-full mt-6 bg-[var(--color-retro-green)] text-[var(--color-retro-dark)] py-3 text-xs font-[inherit] cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--color-retro-gold)] transition-colors"
         >
-          {loading ? "VALIDATING..." : "START GAME"}
+          {loading ? "LOOKING UP..." : "START GAME"}
         </motion.button>
       </motion.form>
 
@@ -85,7 +86,7 @@ export default function PatScreen({ onSubmit, error, loading }: PatScreenProps) 
         transition={{ delay: 1 }}
         className="mt-8 text-[8px]"
       >
-        INSERT TOKEN TO CONTINUE
+        ENTER USERNAME TO CONTINUE
       </motion.p>
     </div>
   );
