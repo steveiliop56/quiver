@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "PressStart2P";
+  src: url("https://fonts.gstatic.com/s/pressstart2p/v15/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2")
+    format("woff2");
+  font-display: swap;
+}
+
+:root {
+  --color-retro-green: #00ff41;
+  --color-retro-dark: #0a0a0a;
+  --color-retro-card: #1a1a2e;
+  --color-retro-accent: #e94560;
+  --color-retro-gold: #f5c518;
+  --color-retro-blue: #16213e;
+  --color-cork: #c4956a;
+  --color-cork-dark: #a67b5b;
+}
+
+body {
+  margin: 0;
+  font-family: "PressStart2P", monospace;
+  background-color: #000;
+  color: var(--color-retro-green);
+  overflow: hidden;
+  height: 100dvh;
+  width: 100vw;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* ── Full CRT Effect ── */
+
+.crt {
+  position: relative;
+  background-color: var(--color-retro-dark);
+}
+
+/* Scanlines */
+.crt::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 1px,
+    rgba(0, 0, 0, 0.12) 1px,
+    rgba(0, 0, 0, 0.12) 2px
+  );
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* CRT vertical refresh band — bright bar scrolling down */
+.crt-refresh {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+  overflow: hidden;
+}
+
+.crt-refresh::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 20%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 80%,
+    transparent 100%
+  );
+  animation: crt-refresh-scroll 8s linear infinite;
+}
+
+@keyframes crt-refresh-scroll {
+  0% {
+    top: -60px;
+  }
+  100% {
+    top: 100vh;
+  }
+}
+
+/* Vignette + phosphor glow + subtle flicker */
+.crt::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(0, 0, 0, 0.4) 80%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  pointer-events: none;
+  z-index: 9999;
+  animation: crt-flicker 0.1s infinite alternate;
+}
+
+@keyframes crt-flicker {
+  0% {
+    opacity: 0.97;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* RGB sub-pixel separation */
+.crt > * {
+  text-shadow:
+    0.5px 0 rgba(255, 0, 0, 0.08),
+    -0.5px 0 rgba(0, 255, 0, 0.08),
+    0 0.5px rgba(0, 0, 255, 0.08);
+}
+
+/* Screen curvature via SVG filter */
+.crt {
+  filter: url(#crt-warp);
+}
+
+/* Phosphor glow on green text */
+.crt {
+  text-shadow:
+    0 0 2px rgba(0, 255, 65, 0.3),
+    0 0 8px rgba(0, 255, 65, 0.1);
+}
+
+/* Subtle screen turn-on animation */
+@keyframes crt-on {
+  0% {
+    filter: brightness(30) saturate(0);
+    transform: scaleY(0.005);
+  }
+  40% {
+    filter: brightness(5) saturate(0);
+    transform: scaleY(0.005);
+  }
+  50% {
+    filter: brightness(2) saturate(0.5);
+    transform: scaleY(1);
+  }
+  100% {
+    filter: brightness(1) saturate(1);
+    transform: scaleY(1);
+  }
+}
+
+.crt {
+  animation: crt-on 0.8s ease-out;
+}
+
+/* Pixel-art style scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-retro-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-retro-green);
+  border: 1px solid var(--color-retro-dark);
+}
