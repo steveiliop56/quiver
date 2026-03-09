@@ -1,4 +1,8 @@
-# Quiver
+<p align="center">
+  <img src="public/logo.svg" alt="Quiver" width="96" height="96" />
+</p>
+
+<h1 align="center">Quiver</h1>
 
 A retro-styled mini-game for discovering self-hosted projects from your GitHub stars. Projects appear as playing cards — pin the ones you like to your wall with a dart, dismiss the rest. Export your curated list when you're done.
 

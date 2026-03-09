@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Card (retro-card blue) -->
+  <rect x="16" y="14" width="32" height="44" rx="2" fill="#1a1a2e" stroke="#00ff41" stroke-width="1"/>
+
+  <!-- Star on card (gold) -->
+  <rect x="30" y="22" width="4" height="4" fill="#f5c518"/>
+  <rect x="26" y="26" width="12" height="4" fill="#f5c518"/>
+  <rect x="22" y="30" width="20" height="4" fill="#f5c518"/>
+  <rect x="26" y="34" width="4" height="4" fill="#f5c518"/>
+  <rect x="34" y="34" width="4" height="4" fill="#f5c518"/>
+  <rect x="22" y="38" width="4" height="4" fill="#f5c518"/>
+  <rect x="38" y="38" width="4" height="4" fill="#f5c518"/>
+
+  <!-- Dart tip (accent red) -->
+  <rect x="30" y="4" width="4" height="4" fill="#e94560"/>
+  <rect x="28" y="8" width="8" height="4" fill="#e94560"/>
+
+  <!-- Dart shaft (green) -->
+  <rect x="31" y="12" width="2" height="6" fill="#00ff41"/>
+
+  <!-- Dart flights (accent red) -->
+  <rect x="25" y="0" width="2" height="6" fill="#e94560"/>
+  <rect x="27" y="2" width="2" height="4" fill="#e94560"/>
+  <rect x="35" y="2" width="2" height="4" fill="#e94560"/>
+  <rect x="37" y="0" width="2" height="6" fill="#e94560"/>
+</svg>
