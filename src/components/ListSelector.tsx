@@ -73,11 +73,11 @@ export default function ListSelector({ username, pat, onSelect, onChangeUsername
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md space-y-5 text-center"
       >
-        <h2 className="text-lg md:text-xl text-[var(--color-retro-gold)]">
+        <h2 className="text-lg md:text-xl text-retro-gold">
           CHOOSE YOUR DECK
         </h2>
         <p className="text-[9px] opacity-60 leading-relaxed">
-          Browsing stars for <span className="text-[var(--color-retro-gold)]">{username}</span>.
+          Browsing stars for <span className="text-retro-gold">{username}</span>.
           <br />
           Filter by language or topic, or browse them all.
         </p>
@@ -100,9 +100,9 @@ export default function ListSelector({ username, pat, onSelect, onChangeUsername
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="border border-[var(--color-retro-accent)]/50 bg-[var(--color-retro-accent)]/10 p-3 space-y-2"
+            className="border border-retro-accent/50 bg-retro-accent/10 p-3 space-y-2"
           >
-            <p className="text-[10px] text-[var(--color-retro-accent)]">{error}</p>
+            <p className="text-[10px] text-retro-accent">{error}</p>
           </motion.div>
         )}
 
@@ -113,34 +113,34 @@ export default function ListSelector({ username, pat, onSelect, onChangeUsername
               onClick={() => handleSelect({ type: "all", value: "" })}
               whileHover={{ scale: 1.02, x: 4 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full text-left bg-[var(--color-retro-blue)] border-2 border-[var(--color-retro-gold)] p-4 font-[inherit] cursor-pointer hover:border-[var(--color-retro-green)] transition-colors"
+              className="w-full text-left bg-retro-blue border-2 border-retro-gold p-4 font-[inherit] cursor-pointer hover:border-retro-green transition-colors"
             >
-              <span className="text-xs text-[var(--color-retro-gold)]">
+              <span className="text-xs text-retro-gold">
                 &#9733; ALL STARS
               </span>
-              <p className="text-[8px] mt-1 opacity-50 text-[var(--color-retro-green)]">
+              <p className="text-[8px] mt-1 opacity-50 text-retro-green">
                 {preloaded.length}+ starred repositories
               </p>
             </motion.button>
 
             {/* Tab switcher */}
-            <div className="flex border border-[var(--color-retro-green)]/20">
+            <div className="flex border border-retro-green/20">
               <button
                 onClick={() => { playClickSound(); setTab("language"); }}
                 className={`flex-1 py-2 text-[9px] font-[inherit] cursor-pointer border-none transition-colors ${
                   tab === "language"
-                    ? "bg-[var(--color-retro-green)]/20 text-[var(--color-retro-green)]"
-                    : "bg-transparent text-[var(--color-retro-green)]/40 hover:text-[var(--color-retro-green)]/70"
+                    ? "bg-retro-green/20 text-retro-green"
+                    : "bg-transparent text-retro-green/40 hover:text-retro-green/70"
                 }`}
               >
                 BY LANGUAGE
               </button>
               <button
                 onClick={() => { playClickSound(); setTab("topic"); }}
-                className={`flex-1 py-2 text-[9px] font-[inherit] cursor-pointer border-none border-l border-l-[var(--color-retro-green)]/20 transition-colors ${
+                className={`flex-1 py-2 text-[9px] font-[inherit] cursor-pointer border-none border-l border-l-retro-green/20 transition-colors ${
                   tab === "topic"
-                    ? "bg-[var(--color-retro-green)]/20 text-[var(--color-retro-green)]"
-                    : "bg-transparent text-[var(--color-retro-green)]/40 hover:text-[var(--color-retro-green)]/70"
+                    ? "bg-retro-green/20 text-retro-green"
+                    : "bg-transparent text-retro-green/40 hover:text-retro-green/70"
                 }`}
               >
                 BY TOPIC
@@ -158,12 +158,12 @@ export default function ListSelector({ username, pat, onSelect, onChangeUsername
                   onClick={() => handleSelect({ type: tab, value: name })}
                   whileHover={{ scale: 1.02, x: 4 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full text-left bg-[var(--color-retro-card)] border border-[var(--color-retro-green)]/20 px-4 py-2.5 font-[inherit] cursor-pointer hover:border-[var(--color-retro-green)]/60 transition-colors flex items-center justify-between"
+                  className="w-full text-left bg-retro-card border border-retro-green/20 px-4 py-2.5 font-[inherit] cursor-pointer hover:border-retro-green/60 transition-colors flex items-center justify-between"
                 >
-                  <span className="text-[10px] text-[var(--color-retro-green)]">
+                  <span className="text-[10px] text-retro-green">
                     &#9830; {name.toUpperCase()}
                   </span>
-                  <span className="text-[8px] text-[var(--color-retro-gold)]">
+                  <span className="text-[8px] text-retro-gold">
                     {count}
                   </span>
                 </motion.button>
@@ -181,7 +181,7 @@ export default function ListSelector({ username, pat, onSelect, onChangeUsername
         <motion.button
           onClick={() => { playClickSound(); onChangeUsername(); }}
           whileHover={{ scale: 1.02 }}
-          className="text-[9px] bg-transparent border-none text-[var(--color-retro-green)]/50 font-[inherit] cursor-pointer hover:text-[var(--color-retro-green)] transition-colors"
+          className="text-[9px] bg-transparent border-none text-retro-green/50 font-[inherit] cursor-pointer hover:text-retro-green transition-colors"
         >
           &#8592; CHANGE USERNAME
         </motion.button>

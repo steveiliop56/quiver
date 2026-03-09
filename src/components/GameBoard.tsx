@@ -94,7 +94,6 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
   const seenIds = useRef(new Set(preloadedRepos.map((r) => r.id)));
 
   const checkMilestone = useCallback((prevTotal: number, newTotal: number) => {
-    // Find the highest milestone crossed by this pin
     let highest: number | null = null;
     for (const m of MILESTONES) {
       if (newTotal >= m && prevTotal < m) {
@@ -102,7 +101,6 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
       }
     }
     if (highest) {
-      // Mark all milestones up to the highest as passed
       for (const m of MILESTONES) {
         if (m <= highest) passedMilestones.current.add(m);
       }
@@ -142,7 +140,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     if (repos.length - currentIndex <= 5 && hasMore && !loading && !rateLimited) {
       loadMore();
     }
-  }, [currentIndex, repos.length, hasMore, loading, rateLimited]);
+  }, [currentIndex, repos.length, hasMore, loading, rateLimited, loadMore]);
 
   useEffect(() => {
     if (currentIndex !== prevIndex.current && repos[currentIndex]) {
@@ -163,12 +161,11 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     storePinned(compact);
   };
 
-  const handlePin = () => {
+  const handlePin = useCallback(() => {
     if (!currentRepo || animatingAction || paused) return;
     playPinSound();
     setAnimatingAction("pin");
 
-    // Update star counter
     const prevTotal = totalStars;
     const newTotal = prevTotal + currentRepo.stars;
     setTotalStars(newTotal);
@@ -186,9 +183,9 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
       setCurrentIndex((i) => i + 1);
       setAnimatingAction(null);
     }, 400);
-  };
+  }, [currentRepo, animatingAction, paused, totalStars, pinnedIds, pinnedRepos, checkMilestone]);
 
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     if (!currentRepo || animatingAction || paused) return;
     playDismissSound();
     setAnimatingAction("dismiss");
@@ -196,7 +193,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
       setCurrentIndex((i) => i + 1);
       setAnimatingAction(null);
     }, 500);
-  };
+  }, [currentRepo, animatingAction, paused]);
 
   const handleExport = () => {
     playClickSound();
@@ -228,7 +225,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [currentRepo, animatingAction, musicOn, paused]);
+  }, [handlePin, handleDismiss, paused, musicOn]);
 
   useEffect(() => {
     return () => stopBgm();
@@ -237,28 +234,28 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
   return (
     <div className="flex flex-col h-full">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-retro-green)]/20">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-retro-green/20">
         <div className="text-[8px] md:text-[10px] space-x-4 flex items-center">
-          <span>PINNED: <span className="text-[var(--color-retro-gold)]">{pinnedIds.size}</span></span>
-          <span className="text-[var(--color-retro-green)]/30">|</span>
+          <span>PINNED: <span className="text-retro-gold">{pinnedIds.size}</span></span>
+          <span className="text-retro-green/30">|</span>
           {/* Mario-style star counter */}
           <span className="flex items-center gap-1">
-            <span className={`text-[var(--color-retro-gold)] text-sm inline-block ${starPop ? "star-pop" : ""}`}>
+            <span className={`text-retro-gold text-sm inline-block ${starPop ? "star-pop" : ""}`}>
               &#9733;
             </span>
-            <span className="text-[var(--color-retro-gold)] tabular-nums">
+            <span className="text-retro-gold tabular-nums">
               {formatStarCount(totalStars)}
             </span>
           </span>
-          <span className="text-[var(--color-retro-green)]/30">|</span>
-          <span>LEFT: <span className="text-[var(--color-retro-accent)]">{remaining > 0 ? remaining : 0}</span></span>
+          <span className="text-retro-green/30">|</span>
+          <span>LEFT: <span className="text-retro-accent">{remaining > 0 ? remaining : 0}</span></span>
         </div>
         <div className="flex items-center gap-2">
           <motion.button
             onClick={() => { playClickSound(); setPaused(true); }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="text-[10px] md:text-xs bg-transparent border border-[var(--color-retro-green)]/30 text-[var(--color-retro-green)] px-2 py-1.5 font-[inherit] cursor-pointer hover:border-[var(--color-retro-green)] transition-colors"
+            className="text-[10px] md:text-xs bg-transparent border border-retro-green/30 text-retro-green px-2 py-1.5 font-[inherit] cursor-pointer hover:border-retro-green transition-colors"
             title="Pause (ESC)"
           >
             II
@@ -267,7 +264,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
             onClick={toggleMusic}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="text-[10px] md:text-xs bg-transparent border border-[var(--color-retro-green)]/30 text-[var(--color-retro-green)] px-2 py-1.5 font-[inherit] cursor-pointer hover:border-[var(--color-retro-green)] transition-colors"
+            className="text-[10px] md:text-xs bg-transparent border border-retro-green/30 text-retro-green px-2 py-1.5 font-[inherit] cursor-pointer hover:border-retro-green transition-colors"
             title="Toggle music (M)"
           >
             {musicOn ? "\u266B ON" : "\u266B OFF"}
@@ -276,7 +273,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
             onClick={handleExport}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="text-[8px] md:text-[10px] bg-[var(--color-retro-gold)] text-[var(--color-retro-dark)] px-4 py-2 font-[inherit] cursor-pointer border-none hover:opacity-80 transition-opacity"
+            className="text-[8px] md:text-[10px] bg-retro-gold text-retro-dark px-4 py-2 font-[inherit] cursor-pointer border-none hover:opacity-80 transition-opacity"
           >
             EXPORT &#9654;
           </motion.button>
@@ -310,7 +307,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
                 <motion.div
                   animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
                   transition={{ duration: 0.6, repeat: 2 }}
-                  className="text-[var(--color-retro-gold)] text-2xl md:text-4xl"
+                  className="text-retro-gold text-2xl md:text-4xl"
                 >
                   &#9733; {formatStarCount(milestone)} STARS! &#9733;
                 </motion.div>
@@ -318,7 +315,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-xs text-[var(--color-retro-green)] mt-2"
+                  className="text-xs text-retro-green mt-2"
                 >
                   MILESTONE REACHED!
                 </motion.p>
@@ -342,21 +339,21 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
               key={repo.id}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 0.6 }}
-              className="absolute w-16 h-20 md:w-20 md:h-24 bg-[var(--color-retro-card)] border border-[var(--color-retro-green)]/30 flex flex-col items-center justify-center p-1"
+              className="absolute w-16 h-20 md:w-20 md:h-24 bg-retro-card border border-retro-green/30 flex flex-col items-center justify-center p-1"
               style={{
                 left: `${10 + (i % 6) * 15}%`,
                 top: `${10 + Math.floor(i / 6) * 40}%`,
                 transform: `rotate(${(i % 3 - 1) * 5}deg)`,
               }}
             >
-              <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[var(--color-retro-accent)] border border-[var(--color-retro-dark)] z-10" />
+              <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-retro-accent border border-retro-dark z-10" />
               <img
                 src={repo.owner.avatarUrl}
                 alt=""
                 className="w-6 h-6 md:w-8 md:h-8 mb-1"
                 style={{ imageRendering: "pixelated" }}
               />
-              <span className="text-[5px] md:text-[6px] text-[var(--color-retro-green)] text-center truncate w-full">
+              <span className="text-[5px] md:text-[6px] text-retro-green text-center truncate w-full">
                 {repo.name}
               </span>
             </motion.div>
@@ -394,7 +391,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[var(--color-retro-dark)]/90 flex items-center justify-center z-50"
+              className="absolute inset-0 bg-retro-dark/90 flex items-center justify-center z-50"
             >
               <motion.div
                 initial={{ scale: 0.8 }}
@@ -402,8 +399,8 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
                 exit={{ scale: 0.8 }}
                 className="text-center space-y-6 p-8"
               >
-                <h2 className="text-xl text-[var(--color-retro-gold)]">PAUSED</h2>
-                <p className="text-[10px] text-[var(--color-retro-gold)] opacity-70">
+                <h2 className="text-xl text-retro-gold">PAUSED</h2>
+                <p className="text-[10px] text-retro-gold opacity-70">
                   &#9733; {totalStars.toLocaleString()} stars collected
                 </p>
                 <div className="space-y-3 flex flex-col items-center">
@@ -411,7 +408,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
                     onClick={() => { playClickSound(); setPaused(false); }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="w-48 text-xs bg-[var(--color-retro-green)] text-[var(--color-retro-dark)] px-6 py-3 font-[inherit] cursor-pointer border-none"
+                    className="w-48 text-xs bg-retro-green text-retro-dark px-6 py-3 font-[inherit] cursor-pointer border-none"
                   >
                     &#9654; RESUME
                   </motion.button>
@@ -419,7 +416,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
                     onClick={() => { playClickSound(); onChangeUsername(); }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="w-48 text-[10px] bg-[var(--color-retro-blue)] text-[var(--color-retro-green)] px-6 py-3 font-[inherit] cursor-pointer border border-[var(--color-retro-green)]/30"
+                    className="w-48 text-[10px] bg-retro-blue text-retro-green px-6 py-3 font-[inherit] cursor-pointer border border-retro-green/30"
                   >
                     &#9881; CHANGE USER
                   </motion.button>
@@ -427,7 +424,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
                     onClick={handleExport}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="w-48 text-[10px] bg-[var(--color-retro-gold)] text-[var(--color-retro-dark)] px-6 py-3 font-[inherit] cursor-pointer border-none"
+                    className="w-48 text-[10px] bg-retro-gold text-retro-dark px-6 py-3 font-[inherit] cursor-pointer border-none"
                   >
                     &#9654; EXPORT
                   </motion.button>
@@ -435,7 +432,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
                     onClick={() => { playClickSound(); onRestart(); }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="w-48 text-[10px] bg-[var(--color-retro-accent)] text-white px-6 py-3 font-[inherit] cursor-pointer border-none"
+                    className="w-48 text-[10px] bg-retro-accent text-white px-6 py-3 font-[inherit] cursor-pointer border-none"
                   >
                     &#8634; RESTART GAME
                   </motion.button>
@@ -460,10 +457,10 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
         {/* Error state */}
         {error && (
           <div className="text-center space-y-4">
-            <p className="text-[var(--color-retro-accent)] text-xs">{error}</p>
+            <p className="text-retro-accent text-xs">{error}</p>
             <button
               onClick={loadMore}
-              className="text-[10px] bg-[var(--color-retro-green)] text-[var(--color-retro-dark)] px-4 py-2 font-[inherit] cursor-pointer border-none"
+              className="text-[10px] bg-retro-green text-retro-dark px-4 py-2 font-[inherit] cursor-pointer border-none"
             >
               RETRY
             </button>
@@ -475,20 +472,20 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center space-y-4 bg-[var(--color-retro-dark)]/80 p-8"
+            className="text-center space-y-4 bg-retro-dark/80 p-8"
           >
-            <p className="text-sm text-[var(--color-retro-gold)]">NO MORE CARDS!</p>
+            <p className="text-sm text-retro-gold">NO MORE CARDS!</p>
             <p className="text-[10px] opacity-70">
               You pinned {pinnedIds.size} project{pinnedIds.size !== 1 ? "s" : ""} to your wall.
             </p>
-            <p className="text-[10px] text-[var(--color-retro-gold)]">
+            <p className="text-[10px] text-retro-gold">
               &#9733; {totalStars.toLocaleString()} total stars
             </p>
             <motion.button
               onClick={handleExport}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="text-xs bg-[var(--color-retro-gold)] text-[var(--color-retro-dark)] px-6 py-3 font-[inherit] cursor-pointer border-none"
+              className="text-xs bg-retro-gold text-retro-dark px-6 py-3 font-[inherit] cursor-pointer border-none"
             >
               EXPORT YOUR QUIVER
             </motion.button>
@@ -497,7 +494,7 @@ export default function GameBoard({ username, pat, filter, preloadedRepos, onExp
       </div>
 
       {/* Bottom hint */}
-      <div className="px-4 py-2 border-t border-[var(--color-retro-green)]/20 text-center">
+      <div className="px-4 py-2 border-t border-retro-green/20 text-center">
         <p className="text-[7px] md:text-[8px] opacity-40">
           &#8592; A/LEFT = PASS &nbsp;&nbsp;|&nbsp;&nbsp; D/RIGHT = PIN &#8594; &nbsp;&nbsp;|&nbsp;&nbsp; M = MUSIC &nbsp;&nbsp;|&nbsp;&nbsp; ESC = PAUSE
         </p>

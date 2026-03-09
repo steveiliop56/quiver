@@ -40,13 +40,13 @@ export default function ExportScreen({ projects, totalStars, onBack, onRestart }
           animate={{ opacity: 1 }}
           className="space-y-6"
         >
-          <p className="text-lg text-[var(--color-retro-accent)]">EMPTY QUIVER!</p>
+          <p className="text-lg text-retro-accent">EMPTY QUIVER!</p>
           <p className="text-[10px] opacity-60">You didn't pin any projects.</p>
           <motion.button
             onClick={onBack}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="text-xs bg-[var(--color-retro-green)] text-[var(--color-retro-dark)] px-6 py-3 font-[inherit] cursor-pointer border-none"
+            className="text-xs bg-retro-green text-retro-dark px-6 py-3 font-[inherit] cursor-pointer border-none"
           >
             &#8592; GO BACK
           </motion.button>
@@ -62,29 +62,29 @@ export default function ExportScreen({ projects, totalStars, onBack, onRestart }
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-lg space-y-6 text-center"
       >
-        <h2 className="text-xl md:text-2xl text-[var(--color-retro-gold)]">
+        <h2 className="text-xl md:text-2xl text-retro-gold">
           YOUR QUIVER
         </h2>
         <p className="text-[10px] opacity-70">
           {projects.length} project{projects.length !== 1 ? "s" : ""} pinned to
           the wall.
         </p>
-        <p className="text-sm text-[var(--color-retro-gold)]">
+        <p className="text-sm text-retro-gold">
           &#9733; {totalStars.toLocaleString()} total stars
         </p>
 
         {/* Project list */}
-        <div className="max-h-48 overflow-y-auto border border-[var(--color-retro-green)]/20 p-3 text-left space-y-2">
+        <div className="max-h-48 overflow-y-auto border border-retro-green/20 p-3 text-left space-y-2">
           {projects.map((p) => (
             <div
               key={p.id}
-              className="flex items-center gap-2 text-[9px] border-b border-[var(--color-retro-green)]/10 pb-1"
+              className="flex items-center gap-2 text-[9px] border-b border-retro-green/10 pb-1"
             >
-              <span className="text-[var(--color-retro-accent)]">&#9830;</span>
-              <span className="text-[var(--color-retro-gold)] truncate flex-1">
+              <span className="text-retro-accent">&#9830;</span>
+              <span className="text-retro-gold truncate flex-1">
                 {p.fullName}
               </span>
-              <span className="text-[var(--color-retro-green)]/50">
+              <span className="text-retro-green/50">
                 &#9733;{p.stars.toLocaleString()}
               </span>
             </div>
@@ -96,13 +96,13 @@ export default function ExportScreen({ projects, totalStars, onBack, onRestart }
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="border border-[var(--color-retro-green)]/30 p-3"
+            className="border border-retro-green/30 p-3"
           >
             <div className="flex justify-between items-center mb-2">
               <span className="text-[8px] opacity-50">PREVIEW</span>
               <button
                 onClick={() => setPreview(null)}
-                className="text-[8px] text-[var(--color-retro-accent)] bg-transparent border-none font-[inherit] cursor-pointer"
+                className="text-[8px] text-retro-accent bg-transparent border-none font-[inherit] cursor-pointer"
               >
                 CLOSE
               </button>
@@ -119,13 +119,13 @@ export default function ExportScreen({ projects, totalStars, onBack, onRestart }
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => handlePreview("md")}
-                className="text-[8px] bg-transparent border border-[var(--color-retro-green)]/30 text-[var(--color-retro-green)] px-4 py-2 font-[inherit] cursor-pointer hover:border-[var(--color-retro-green)] transition-colors"
+                className="text-[8px] bg-transparent border border-retro-green/30 text-retro-green px-4 py-2 font-[inherit] cursor-pointer hover:border-retro-green transition-colors"
               >
                 PREVIEW MD
               </button>
               <button
                 onClick={() => handlePreview("json")}
-                className="text-[8px] bg-transparent border border-[var(--color-retro-green)]/30 text-[var(--color-retro-green)] px-4 py-2 font-[inherit] cursor-pointer hover:border-[var(--color-retro-green)] transition-colors"
+                className="text-[8px] bg-transparent border border-retro-green/30 text-retro-green px-4 py-2 font-[inherit] cursor-pointer hover:border-retro-green transition-colors"
               >
                 PREVIEW JSON
               </button>
@@ -137,7 +137,7 @@ export default function ExportScreen({ projects, totalStars, onBack, onRestart }
                 onClick={() => handleExport("md")}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="text-xs bg-[var(--color-retro-green)] text-[var(--color-retro-dark)] px-6 py-3 font-[inherit] cursor-pointer border-none"
+                className="text-xs bg-retro-green text-retro-dark px-6 py-3 font-[inherit] cursor-pointer border-none"
               >
                 EXPORT .MD
               </motion.button>
@@ -145,7 +145,7 @@ export default function ExportScreen({ projects, totalStars, onBack, onRestart }
                 onClick={() => handleExport("json")}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="text-xs bg-[var(--color-retro-gold)] text-[var(--color-retro-dark)] px-6 py-3 font-[inherit] cursor-pointer border-none"
+                className="text-xs bg-retro-gold text-retro-dark px-6 py-3 font-[inherit] cursor-pointer border-none"
               >
                 EXPORT .JSON
               </motion.button>
@@ -154,7 +154,7 @@ export default function ExportScreen({ projects, totalStars, onBack, onRestart }
             <motion.button
               onClick={onBack}
               whileHover={{ scale: 1.02 }}
-              className="text-[9px] bg-transparent border-none text-[var(--color-retro-green)]/50 font-[inherit] cursor-pointer hover:text-[var(--color-retro-green)] transition-colors"
+              className="text-[9px] bg-transparent border-none text-retro-green/50 font-[inherit] cursor-pointer hover:text-retro-green transition-colors"
             >
               &#8592; KEEP PLAYING
             </motion.button>
@@ -165,14 +165,14 @@ export default function ExportScreen({ projects, totalStars, onBack, onRestart }
             animate={{ opacity: 1 }}
             className="space-y-4"
           >
-            <p className="text-sm text-[var(--color-retro-green)]">
+            <p className="text-sm text-retro-green">
               EXPORTED! &#10003;
             </p>
             <motion.button
               onClick={() => { playClickSound(); onRestart(); }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="text-xs bg-[var(--color-retro-accent)] text-white px-6 py-3 font-[inherit] cursor-pointer border-none hover:opacity-80 transition-opacity"
+              className="text-xs bg-retro-accent text-white px-6 py-3 font-[inherit] cursor-pointer border-none hover:opacity-80 transition-opacity"
             >
               &#8634; PLAY AGAIN
             </motion.button>
